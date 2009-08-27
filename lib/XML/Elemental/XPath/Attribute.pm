@@ -36,7 +36,8 @@ sub getLocalName {
 
 sub getPrefix {
     my ($local_name, $ns) = process_name($_[0]->{name});
-    unless (defined $ns && $ns ne '') {  # undef or empty means parent namespace
+    unless (defined $ns && $ns ne '')
+    {                   # undef or empty means parent namespace
         my $foo;
         ($foo, $ns) = process_name($_[0]->{parent}->name);
     }
@@ -46,16 +47,18 @@ sub getPrefix {
 sub getNamespace {
     my ($a, $prefix) = @_;
     my $ns;
-    unless (defined $prefix) {           # default to this one.
+    unless (defined $prefix) {    # default to this one.
         my $foo;
         ($foo, $ns) = process_name($_[0]->{name});
         unless (defined $ns && $ns ne '')
-        {                                # undef or empty means parent namespace
+        {                         # undef or empty means parent namespace
             ($foo, $ns) = process_name($_[0]->{parent}->name);
         }
-    } else {
+    }
+    else {
         $ns = $a->root->xp->get_namespace($prefix);
     }
+
 #    return undef unless defined $ns && $ns ne '';
     return XML::Elemental::XPath::Namespace->new($prefix, $ns);
 }
@@ -81,11 +84,14 @@ sub cmp {
     if ($b->isa('XML::Elemental::XPath::Attribute')) {
         return $a->parent->cmp($b->parent)
           || $a->getLocalName cmp $b->getLocalName;
-    } elsif ($b->isa('XML::Elemental::XPath::Element')) {
+    }
+    elsif ($b->isa('XML::Elemental::XPath::Element')) {
         return $a->parent->cmp($b) || 1;
-    } elsif ($b->isa('XML::Elemental::XPath::Document')) {
+    }
+    elsif ($b->isa('XML::Elemental::XPath::Document')) {
         return 1;
-    } else {
+    }
+    else {
         die "unknown node type ", ref($b);
     }
 }

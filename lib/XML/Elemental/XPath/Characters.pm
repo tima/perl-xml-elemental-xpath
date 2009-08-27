@@ -57,6 +57,7 @@ sub cmp {
     return undef unless $branch_a[-1] == $branch_b[-1];       # different doc
     my ($ancestor_a, $ancestor_b)
       ;    # find the first ancestors that is not shared -- they are siblings.
+
     while ($ancestor_a == $ancestor_b) {
         $ancestor_a = pop @branch_a;
         $ancestor_b = pop @branch_b;

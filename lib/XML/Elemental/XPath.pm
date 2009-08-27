@@ -7,9 +7,9 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 
 my $classes = {
-               Document   => 'XML::Elemental::XPath::Document',
-               Element    => 'XML::Elemental::XPath::Element',
-               Characters => 'XML::Elemental::XPath::Characters',
+    Document   => 'XML::Elemental::XPath::Document',
+    Element    => 'XML::Elemental::XPath::Element',
+    Characters => 'XML::Elemental::XPath::Characters',
 };
 
 sub parser { return $_[0]->SUPER::parser($classes); }

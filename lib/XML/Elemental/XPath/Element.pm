@@ -47,7 +47,8 @@ sub getNamespace {
         (my $x, $ns) = process_name($e->name);
         $prefix = $e->root->xp->get_namespace($ns);
 
-    } else {
+    }
+    else {
         $ns = $e->root->xp->get_namespace($prefix);
     }
     return XML::Elemental::XPath::Namespace->new($prefix, $ns);
@@ -100,11 +101,13 @@ sub getAttributes {
 # *getAttributeNodes = *getAttributes;
 
 sub toString {
-    return ''                   unless defined $_[0]->{contents};
-    return $_[0]->text_contents unless $_[1];                       # recurse
-    return                                                          # no recurse
-      join('', map { $_->data }
-             grep { $_->can('data') } @{$_[0]->contents});
+    return '' unless defined $_[0]->{contents};
+    return $_[0]->text_contents unless $_[1];    # recurse
+    return    # no recurse
+      join(
+        '', map { $_->data }
+          grep { $_->can('data') } @{$_[0]->contents}
+      );
 }
 
 sub to_number {
