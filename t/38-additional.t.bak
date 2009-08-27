@@ -1,0 +1,163 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib 'lib';
+
+use Test::More tests => 5;
+
+use XML::Elemental::XPath;
+
+my $x = XML::Elemental::XPath->parser;
+
+ok(1); 
+
+{
+    my $e = $x->parse_string('<doc>5</doc>');
+    is($e->to_number->as_string, 5, "to_number");
+}
+
+{
+    my $e = $x->parse_string('<doc><p>5</p></doc>');
+    is($e->first_elt('p')->to_number->as_string, 5, "element to_number");
+    is($e->getValue, 5, '$e->getValue');
+}
+
+{
+    my $e = $x->parse_string('<doc><p>foo</p></doc>');
+
+    # is( $e->first_elt( 'p')->to_number->as_string, "NaN", "to_number (NaN)");
+}
+
+{
+    my $e = $x->parse_string(
+        '<doc><p>p1</p><foo>toto</foo><p>:p2</p>
+                                           <s id="s1"><e>e1</e><e>:e2</e></s>
+                                           <s id="s2"><e>e3</e><e>:e4</e></s>
+                                      </doc>'
+    );
+    is($e->findnodes_as_string('//p'),
+        '<p>p1</p><p>:p2</p>', "findnodes_as_string");
+    is($e->root->findnodes_as_string('//p'),
+        '<p>p1</p><p>:p2</p>', "findnodes_as_string");
+    is($e->root->findnodes_as_string('p'),
+        '<p>p1</p><p>:p2</p>', "findnodes_as_string (from root)");
+
+    if (
+        defined($XML::XPathEngine::VERSION)
+        || ($XML::XPath::VERSION && (($XML::XPath::VERSION eq '1.13.1') || $XML::XPath::VERSION >= 1.13))
+      ) {
+        ok($e->root->exists('//p'), "exists //p (on root)");
+        ok($e->exists('//p'), "exists //p (on root)");
+      } else {
+        skip(
+            2,
+"your version of XML::XPath has a bug in the 'exists' method, you cannot use it with XML::Elemental::XPath"
+        );
+    }
+
+    my $p = $e->first_elt('p');
+    ok($p->matches('p'), "\$p->matches( 'p')");
+    ok($e->matches('//p', $p), "\$p->matches( 'p') (from the twig)");
+    my $p2_set = $e->root->find('p[text()= ":p2"]');
+    is($p2_set->size,       1,     "find 1 node");
+    is($p2_set->to_literal, ':p2', 'p2 text');
+    my $s_set = $e->find('//s[e/text()= ":e2"]');
+    is($s_set->size, 1, "find 1 s node (nodeset)");
+    my @s = $s_set->get_nodelist;
+    is(scalar @s, 1, "find 1 s node nodelist");
+    my $s = shift @s;
+    is($s->getValue, 'e1:e2', 's text');
+}
+
+{
+    my $e =
+      XML::Elemental::XPath->new(pi => 'process', comments => 'process')->parse(
+        '<doc><!-- comment --><p att="foo">text</p><?target pi?>
+                                 <ns xmlns:foo="uri"><foo:bar foo:att="1">foobar</foo:bar></ns>
+                                 </doc>'
+      );
+    nok($e->isElementNode,               '$e isElementNode');
+    nok($e->isAttributeNode,             '$e isAttributeNode');
+    nok($e->isTextNode,                  '$e isTextNode');
+    nok($e->isProcessingInstructionNode, '$e isProcessingInstructionNode');
+    nok($e->isPINode,                    '$e isPINode');
+    nok($e->isCommentNode,               '$e isCommentNode');
+    nok($e->isNamespaceNode,             '$e isNamespaceNode');
+    ok($e->getAttributes, '$e->getAttributes');
+
+    my $root = $e->root;
+    ok($root->isElementNode, '$root isElementNode');
+    nok($root->isAttributeNode, '$root isAttributeNode');
+    nok($root->isTextNode,      '$root isTextNode');
+    nok($root->isProcessingInstructionNode,
+        '$root isProcessingInstructionNode');
+    nok($root->isPINode,        '$root isPINode');
+    nok($root->isCommentNode,   '$root isCommentNode');
+    nok($root->isNamespaceNode, '$root isNamespaceNode');
+
+    my $p = $e->first_elt('p');
+    ok($p->isElementNode, '$p isElementNode');
+    nok($p->isAttributeNode,             '$p isAttributeNode');
+    nok($p->isTextNode,                  '$p isTextNode');
+    nok($p->isProcessingInstructionNode, '$p isProcessingInstructionNode');
+    nok($p->isPINode,                    '$p isPINode');
+    nok($p->isCommentNode,               '$p isCommentNode');
+    nok($p->isNamespaceNode,             '$p isNamespaceNode');
+
+    my @att = $p->getAttributes;
+    my $att = shift @att;
+    is($att->getName,  'att',       '$att->getName');
+    is($att->getValue, 'foo',       '$att->getValue');
+    is($att->toString, 'att="foo"', '$p attribute');
+    nok($att->isElementNode, '$att isElementNode');
+    ok($att->isAttributeNode, '$att isAttributeNode');
+    nok($att->isTextNode,                  '$att isTextNode');
+    nok($att->isProcessingInstructionNode, '$att isProcessingInstructionNode');
+    nok($att->isPINode,                    '$att isPINode');
+    nok($att->isCommentNode,               '$att isCommentNode');
+    nok($att->isNamespaceNode,             '$att isNamespaceNode');
+
+    my $comment = $e->first_elt('#COMMENT');
+    nok($comment->isElementNode,   '$comment isElementNode');
+    nok($comment->isAttributeNode, '$comment isAttributeNode');
+    nok($comment->isTextNode,      '$comment isTextNode');
+    nok($comment->isProcessingInstructionNode,
+        '$comment isProcessingInstructionNode');
+    nok($comment->isPINode, '$comment isPINode');
+    ok($comment->isCommentNode, '$comment isCommentNode');
+    nok($comment->isNamespaceNode, '$comment isNamespaceNode');
+
+    my $pi = $e->first_elt('#PI');
+    nok($pi->isElementNode,   '$pi isElementNode');
+    nok($pi->isAttributeNode, '$pi isAttributeNode');
+    nok($pi->isTextNode,      '$pi isTextNode');
+    ok($pi->isProcessingInstructionNode, '$pi isProcessingInstructionNode');
+    ok($pi->isPINode,                    '$pi isPINode');
+    nok($pi->isCommentNode,   '$pi isCommentNode');
+    nok($pi->isNamespaceNode, '$pi isNamespaceNode');
+
+    is($e->findvalue('//foo:bar'),       'foobar', '//foo:bar');
+    is($e->findvalue('//*[@foo:att]'),   'foobar', '//*[@foo:att');
+    is($e->findvalue('//*[@foo:att=1]'), 'foobar', '//*[@foo:att=1]');
+    is($e->findvalue('//*[@foo:att=2]'), '',       '//*[@foo:att=2]');
+
+    my $ewig = ($root->findnodes('..'))[0];
+    ok(UNIVERSAL::isa($ewig, 'XML::Twig'),
+        'findnodes returning the document node (' . ref($ewig) . ')');
+    my $back_to_root = ($root->findnodes('../*'))[0];
+    is($back_to_root->gi, 'doc',
+        'findnodes returning the root through the document node');
+}
+
+# test namespace methods
+{
+    my $ns = XML::Elemental::XPath::Namespace->new(foo => "uri");
+    ok($ns->isNamespaceNode, '$ns isNamespaceNode');
+    is($ns->getPrefix,   'foo', 'getPrefix');
+    is($ns->getExpanded, 'uri', 'getExpanded');
+    is($ns->getValue,    'uri', 'getValue');
+    is($ns->getData,     'uri', 'getData');
+}
+
+exit 0;
+

@@ -1,0 +1,10 @@
+Changes
+lib/XML/Elemental/XPath.pm
+lib/XML/Elemental/XPath/Attribute.pm
+lib/XML/Elemental/XPath/Characters.pm
+lib/XML/Elemental/XPath/Document.pm
+lib/XML/Elemental/XPath/Element.pm
+lib/XML/Elemental/XPath/Namespace.pm
+lib/XML/XPathEngine/Elemental.pm
+Makefile.PL
+README
